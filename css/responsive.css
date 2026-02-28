@@ -1,0 +1,135 @@
+@media (max-width: 1024px) {
+    .about-grid { grid-template-columns: 1fr; }
+    .skills-grid { grid-template-columns: repeat(2, 1fr); }
+    .contact-grid { grid-template-columns: 1fr; }
+    .gallery-item { width: 280px; height: 198px; margin-left: -140px; margin-top: -99px; }
+}
+
+@media (max-width: 768px) {
+    html, body, a, button { cursor: auto; }
+    .pill-nav { display: none; }
+    .mobile-pill-nav { display: flex; }
+    .theme-cycle-btn { top: 12px; right: 12px; width: 38px; height: 38px; }
+    .section { padding: 70px 0; }
+    .section-header { margin-bottom: 40px; }
+    .hero-subtitle { font-size: 0.78rem; letter-spacing: 1px; }
+    .hero-title { letter-spacing: 2px; }
+    .purpose-statement { font-size: 0.75rem; }
+    .bento-inner.skill-spotlight { padding: 32px 22px; }
+    .spotlight-title { font-size: 1.3rem; }
+    .skills-grid { grid-template-columns: 1fr; gap: 14px; }
+    .hero-cta { flex-direction: column; align-items: center; }
+    .btn { width: 100%; max-width: 280px; justify-content: center; }
+    .circular-gallery { height: 280px; }
+    .gallery-item { width: 234px; height: 165px; margin-left: -117px; margin-top: -83px; }
+    .lightbox-img { max-width: 95%; max-height: 70vh; }
+    .lightbox-close { top: 14px; right: 14px; width: 40px; height: 40px; }
+    .footer { padding-bottom: calc(80px + env(safe-area-inset-bottom)); }
+    .contact-grid { grid-template-columns: 1fr; gap: 14px; }
+    .cta-statement { font-size: 0.92rem; margin-bottom: 36px; }
+}
+
+@media (max-width: 480px) {
+    .theme-cycle-btn { width: 36px; height: 36px; }
+    .theme-cycle-btn svg { width: 16px; height: 16px; }
+    .hero-title { font-size: 1.6rem; letter-spacing: 1px; }
+    .typewriter-container { font-size: 0.85rem; }
+    .hero-subtitle { font-size: 0.68rem; }
+    .section-title { font-size: 1.7rem; }
+    .terminal-body { font-size: 0.78rem; padding: 16px; }
+    .tools-marquee { margin: 0 -24px; }
+    .scroll-indicator { display: none; }
+    .circular-gallery { height: 230px; }
+    .gallery-item { width: 191px; height: 135px; margin-left: -96px; margin-top: -68px; }
+    .gallery-info-title { font-size: 0.88rem; }
+    .gallery-info-desc { font-size: 0.75rem; }
+    .mobile-pill-link { font-size: 0.55rem; padding: 3px 5px; }
+    .mobile-pill-link svg { width: 16px; height: 16px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+    .marquee-track { animation: none; }
+    .hero-title.glitch::before, .hero-title.glitch::after { display: none; }
+}
+/* Galaxy toggle button responsive */
+@media (max-width: 480px) {
+    .galaxy-toggle-btn {
+        bottom: 14px;
+        right: 14px;
+        padding: 6px 10px 6px 8px;
+        font-size: 0.62rem;
+    }
+    .galaxy-toggle-btn svg { width: 13px; height: 13px; }
+}
+
+/* ── Project CardSwap Responsive ── */
+.project-cardswap-wrapper {
+    /* padding ekstra supaya shadow kartu tidak terpotong */
+    padding: 4rem 3rem 5rem;
+    /* overflow hidden hanya sumbu X, bukan Y supaya shadow atas tidak terpotong */
+    overflow-x: clip;
+}
+
+@media (max-width: 768px) {
+    .project-cardswap-wrapper {
+        padding: 3rem 2rem 4rem;
+    }
+
+    .card-swap-container {
+        width: min(360px, 88vw);
+    }
+
+    .proj-card {
+        width: min(360px, 88vw);
+        padding: 1.5rem;
+    }
+
+    .proj-card-title {
+        font-size: 1.05rem;
+    }
+
+    .proj-card-desc {
+        font-size: 0.83rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .project-cardswap-wrapper {
+        padding: 2.5rem 1.5rem 3.5rem;
+    }
+
+    .card-swap-container {
+        width: min(300px, 82vw);
+    }
+
+    .proj-card {
+        width: min(300px, 82vw);
+        padding: 1.25rem;
+    }
+
+    .proj-card-icon {
+        width: 44px; height: 44px;
+    }
+
+    .proj-card-icon svg {
+        width: 24px; height: 24px;
+    }
+
+    .proj-card-title {
+        font-size: 1rem;
+    }
+
+    .proj-card-desc {
+        font-size: 0.8rem;
+        margin-bottom: 1.1rem;
+    }
+
+    .proj-tag {
+        font-size: 0.65rem;
+    }
+}

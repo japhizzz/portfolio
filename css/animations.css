@@ -1,0 +1,64 @@
+@keyframes glitch-1 {
+    0% { transform: translate(0); }
+    20% { transform: translate(-3px, 3px); }
+    40% { transform: translate(-3px, -3px); }
+    60% { transform: translate(3px, 3px); }
+    80% { transform: translate(3px, -3px); }
+    100% { transform: translate(0); }
+}
+@keyframes glitch-2 {
+    0% { transform: translate(0); }
+    20% { transform: translate(3px, -3px); }
+    40% { transform: translate(3px, 3px); }
+    60% { transform: translate(-3px, -3px); }
+    80% { transform: translate(-3px, 3px); }
+    100% { transform: translate(0); }
+}
+@keyframes cursor-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+@keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+@keyframes scroll-wheel { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(6px); } }
+@keyframes shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+@keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(40px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.reveal-up {
+    opacity: 0; transform: translateY(40px);
+    transition: opacity 0.8s cubic-bezier(0.4,0,0.2,1), transform 0.8s cubic-bezier(0.4,0,0.2,1);
+    transition-delay: var(--delay, 0s);
+    will-change: opacity, transform;
+}
+.reveal-up.visible { opacity: 1; transform: translateY(0); will-change: auto; }
+.reveal-text { opacity: 0; transform: translateY(20px); transition: opacity 0.6s, transform 0.6s; will-change: opacity, transform; }
+.reveal-text.visible { opacity: 1; transform: translateY(0); will-change: auto; }
+
+.hero-content > * { animation: fadeInUp 0.8s cubic-bezier(0.4,0,0.2,1) both; will-change: opacity, transform; }
+.hero-content > *:nth-child(1) { animation-delay: 0.1s; }
+.hero-content > *:nth-child(2) { animation-delay: 0.25s; }
+.hero-content > *:nth-child(3) { animation-delay: 0.4s; }
+.hero-content > *:nth-child(4) { animation-delay: 0.5s; }
+.hero-content > *:nth-child(5) { animation-delay: 0.6s; }
+.hero-content > *:nth-child(6) { animation-delay: 0.7s; }
+.hero-content > *:nth-child(7) { animation-delay: 0.8s; }
+.hero-content > *:nth-child(8) { animation-delay: 0.9s; }
+
+/* ── prefers-reduced-motion: matikan semua animasi berat ── */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+    .reveal-up, .reveal-text {
+        opacity: 1;
+        transform: none;
+        transition: none;
+    }
+    .hero-content > * {
+        animation: none;
+        opacity: 1;
+        transform: none;
+    }
+}
