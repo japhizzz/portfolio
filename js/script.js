@@ -621,6 +621,31 @@ function initGalaxyBg() {
                 iconOff.style.display = '';
                 label.textContent = 'Galaxy: OFF';
                 toggleBtn.classList.add('galaxy-off');
+
+                // Toggle dari low-device: ON = WebGL, OFF = shooting stars
+                toggleBtn.dataset.listenerAttached = 'true';
+                toggleBtn.addEventListener('click', () => {
+                    galaxyEnabled = !galaxyEnabled;
+                    const ss = document.getElementById('shootingStarsCanvas');
+                    if (galaxyEnabled) {
+                        canvas.style.opacity = '1';
+                        if (!rafId) rafId = requestAnimationFrame(render);
+                        iconOn.style.display  = '';
+                        iconOff.style.display = 'none';
+                        label.textContent = 'Galaxy: ON';
+                        toggleBtn.classList.remove('galaxy-off');
+                        if (ss && ss._stopShootingStars) ss._stopShootingStars();
+                    } else {
+                        gl.clearColor(0, 0, 0, 0);
+                        gl.clear(gl.COLOR_BUFFER_BIT);
+                        canvas.style.opacity = '0';
+                        iconOn.style.display  = 'none';
+                        iconOff.style.display = '';
+                        label.textContent = 'Galaxy: OFF';
+                        toggleBtn.classList.add('galaxy-off');
+                        if (ss && ss._startShootingStars) ss._startShootingStars();
+                    }
+                });
             }
 
             // Notif kecil di pojok — hilang sendiri setelah 5 detik
@@ -646,26 +671,30 @@ function initGalaxyBg() {
     // Mulai benchmark saat halaman load
     requestAnimationFrame(benchmarkRender);
 
-    // ── Galaxy Toggle Button ──────────────────────────────────────────────────
+    // ── Galaxy Toggle Button (hanya untuk device kuat — low-device sudah handle di benchmark) ──
     const toggleBtn = document.getElementById('galaxyToggleBtn');
-    if (toggleBtn) {
+    if (toggleBtn && !toggleBtn.dataset.listenerAttached) {
+        toggleBtn.dataset.listenerAttached = 'true';
         const iconOn  = toggleBtn.querySelector('.galaxy-icon-on');
         const iconOff = toggleBtn.querySelector('.galaxy-icon-off');
         const label   = toggleBtn.querySelector('.galaxy-toggle-label');
 
         toggleBtn.addEventListener('click', () => {
             galaxyEnabled = !galaxyEnabled;
+            const ssCanvas = document.getElementById('shootingStarsCanvas');
 
             if (galaxyEnabled) {
+                // Nyalakan WebGL galaxy
                 canvas.style.opacity = '1';
+                if (!rafId) rafId = requestAnimationFrame(render);
                 iconOn.style.display  = '';
                 iconOff.style.display = 'none';
                 label.textContent = 'Galaxy: ON';
                 toggleBtn.classList.remove('galaxy-off');
-                // Pastikan render loop jalan kembali
-                if (!rafId) rafId = requestAnimationFrame(render);
+                // Matikan shooting stars canvas 2D
+                if (ssCanvas && ssCanvas._stopShootingStars) ssCanvas._stopShootingStars();
             } else {
-                // Clear canvas to transparent/black when disabled
+                // Matikan WebGL galaxy
                 gl.clearColor(0, 0, 0, 0);
                 gl.clear(gl.COLOR_BUFFER_BIT);
                 canvas.style.opacity = '0';
@@ -673,6 +702,8 @@ function initGalaxyBg() {
                 iconOff.style.display = '';
                 label.textContent = 'Galaxy: OFF';
                 toggleBtn.classList.add('galaxy-off');
+                // Nyalakan shooting stars canvas 2D sebagai pengganti
+                if (ssCanvas && ssCanvas._startShootingStars) ssCanvas._startShootingStars();
             }
         });
     }
