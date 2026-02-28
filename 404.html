@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 — Page Not Found | Javier Peres Tambunan</title>
+    <link rel="icon" type="image/x-icon" href="assets/images/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/images/favicon-32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="assets/images/favicon-16.png">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --font-mono: 'JetBrains Mono', monospace;
+            --font-sans: 'Inter', sans-serif;
+            --bg-primary: #0a0a0f;
+            --bg-card: #14141e;
+            --text-primary: #e8e8ed;
+            --text-secondary: #9898a6;
+            --text-muted: #5a5a6e;
+            --accent: #6c63ff;
+            --accent-light: #8b83ff;
+            --accent-glow: rgba(108, 99, 255, 0.15);
+            --accent-glow-strong: rgba(108, 99, 255, 0.35);
+            --border: rgba(255, 255, 255, 0.06);
+            --border-hover: rgba(255, 255, 255, 0.12);
+        }
+
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html, body {
+            height: 100%;
+            font-family: var(--font-sans);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            overflow: hidden;
+            cursor: none;
+        }
+
+        /* ── Custom cursor ── */
+        .cursor-outer {
+            position: fixed; pointer-events: none; z-index: 99999;
+            width: 32px; height: 32px;
+            border: 1.5px solid var(--accent);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.25s, height 0.25s, opacity 0.25s, border-color 0.25s;
+            opacity: 0.6;
+        }
+        .cursor-inner {
+            position: fixed; pointer-events: none; z-index: 99999;
+            width: 5px; height: 5px;
+            background: var(--accent);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+        }
+        .cursor-outer.hovering { width: 48px; height: 48px; opacity: 0.9; border-color: var(--accent-light); }
+
+        /* ── Layout ── */
+        .container {
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            position: relative;
+        }
+
+        /* ── Vertical bar — kiri, sama seperti loading screen ── */
+        .side-bar {
+            position: fixed;
+            left: 36px;
+            top: 10%;
+            bottom: 10%;
+            width: 2px;
+            background: rgba(108, 99, 255, 0.12);
+            border-radius: 2px;
+        }
+
+        .side-bar::after {
+            content: '';
+            position: absolute;
+            bottom: 0; left: 0;
+            width: 100%;
+            height: 40%;
+            background: var(--accent);
+            border-radius: 2px;
+            box-shadow: 0 0 12px rgba(108, 99, 255, 0.5), 0 0 24px rgba(108, 99, 255, 0.25);
+            animation: barPulse 3s ease-in-out infinite;
+        }
+
+        @keyframes barPulse {
+            0%, 100% { height: 30%; opacity: 0.7; }
+            50%       { height: 50%; opacity: 1; }
+        }
+
+        /* ── Content ── */
+        .content {
+            text-align: left;
+            max-width: 520px;
+            animation: fadeUp 0.7s cubic-bezier(0.4, 0, 0.2, 1) both;
+        }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(24px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .error-tag {
+            display: inline-block;
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--accent);
+            background: var(--accent-glow);
+            border: 1px solid var(--accent-glow-strong);
+            border-radius: 100px;
+            padding: 0.25rem 0.85rem;
+            margin-bottom: 1.75rem;
+            animation: fadeUp 0.7s 0.1s cubic-bezier(0.4, 0, 0.2, 1) both;
+        }
+
+        .error-code {
+            font-family: var(--font-mono);
+            font-size: clamp(5rem, 18vw, 9rem);
+            font-weight: 700;
+            color: var(--text-primary);
+            line-height: 1;
+            letter-spacing: -0.04em;
+            margin-bottom: 0.25rem;
+            animation: fadeUp 0.7s 0.15s cubic-bezier(0.4, 0, 0.2, 1) both;
+        }
+
+        .error-code span {
+            color: var(--accent);
+        }
+
+        .error-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 0.75rem;
+            font-family: var(--font-mono);
+            letter-spacing: 0.02em;
+            animation: fadeUp 0.7s 0.2s cubic-bezier(0.4, 0, 0.2, 1) both;
+        }
+
+        .error-desc {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            line-height: 1.7;
+            margin-bottom: 2.5rem;
+            max-width: 380px;
+            animation: fadeUp 0.7s 0.25s cubic-bezier(0.4, 0, 0.2, 1) both;
+        }
+
+        /* ── Divider ── */
+        .divider {
+            width: 40px;
+            height: 1px;
+            background: var(--border);
+            margin-bottom: 2rem;
+            animation: fadeUp 0.7s 0.28s cubic-bezier(0.4, 0, 0.2, 1) both;
+        }
+
+        /* ── Button ── */
+        .btn-home {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.6rem;
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            font-weight: 500;
+            letter-spacing: 0.05em;
+            color: white;
+            background: var(--accent);
+            border: none;
+            border-radius: 100px;
+            padding: 0.75rem 1.5rem;
+            text-decoration: none;
+            cursor: none;
+            transition: background 0.25s, box-shadow 0.25s, transform 0.2s;
+            box-shadow: 0 4px 20px rgba(108, 99, 255, 0.35);
+            animation: fadeUp 0.7s 0.32s cubic-bezier(0.4, 0, 0.2, 1) both;
+        }
+
+        .btn-home:hover {
+            background: var(--accent-light);
+            box-shadow: 0 6px 28px rgba(108, 99, 255, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .btn-home svg {
+            transition: transform 0.2s;
+        }
+
+        .btn-home:hover svg {
+            transform: translateX(-3px);
+        }
+
+        /* ── Path info ── */
+        .path-info {
+            margin-top: 1.5rem;
+            font-family: var(--font-mono);
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            animation: fadeUp 0.7s 0.38s cubic-bezier(0.4, 0, 0.2, 1) both;
+        }
+
+        .path-info span {
+            color: var(--accent);
+            opacity: 0.6;
+        }
+
+        /* ── Glitch effect on 404 ── */
+        .error-code {
+            position: relative;
+        }
+
+        .error-code::before,
+        .error-code::after {
+            content: attr(data-text);
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            font-family: var(--font-mono);
+            font-size: inherit;
+            font-weight: inherit;
+            letter-spacing: inherit;
+            line-height: inherit;
+        }
+
+        .error-code::before {
+            color: rgba(255, 0, 255, 0.25);
+            clip-path: inset(0 0 65% 0);
+            animation: glitch1 5s infinite linear alternate-reverse;
+        }
+
+        .error-code::after {
+            color: rgba(0, 255, 255, 0.25);
+            clip-path: inset(40% 0 0 0);
+            animation: glitch2 4s infinite linear alternate-reverse;
+        }
+
+        @keyframes glitch1 {
+            0%, 90%    { transform: none; }
+            91%        { transform: translate(-3px, 1px) skewX(-2deg); }
+            93%        { transform: translate(3px, -1px); }
+            95%        { transform: translate(-2px, 0); }
+            100%       { transform: none; }
+        }
+
+        @keyframes glitch2 {
+            0%, 88%    { transform: none; }
+            89%        { transform: translate(3px, -1px) skewX(1deg); }
+            92%        { transform: translate(-3px, 2px); }
+            95%        { transform: translate(2px, 0); }
+            100%       { transform: none; }
+        }
+
+        /* ── Noise overlay ── */
+        .noise {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.025;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+            background-size: 200px 200px;
+        }
+
+        /* ── Glow orb background ── */
+        .glow-orb {
+            position: fixed;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(108, 99, 255, 0.07) 0%, transparent 70%);
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-20%, -50%);
+            pointer-events: none;
+            z-index: 0;
+            animation: orbDrift 8s ease-in-out infinite alternate;
+        }
+
+        @keyframes orbDrift {
+            from { transform: translate(-20%, -50%) scale(1); }
+            to   { transform: translate(-15%, -55%) scale(1.1); }
+        }
+
+        .container { position: relative; z-index: 1; }
+
+        /* ── Mobile ── */
+        @media (max-width: 600px) {
+            .side-bar { display: none; }
+            .container { justify-content: flex-start; padding: 3rem 1.75rem; align-items: center; }
+            .content { text-align: left; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="cursor-outer" id="cursorOuter"></div>
+    <div class="cursor-inner" id="cursorInner"></div>
+
+    <div class="noise"></div>
+    <div class="glow-orb"></div>
+    <div class="side-bar"></div>
+
+    <div class="container">
+        <div class="content">
+            <div class="error-tag">&lt;error&gt;</div>
+
+            <div class="error-code" data-text="4○4">4<span>○</span>4</div>
+
+            <p class="error-title">// page_not_found</p>
+
+            <div class="divider"></div>
+
+            <p class="error-desc">
+                The page you're looking for doesn't exist or has been moved.
+                Check the URL, or head back to home.
+            </p>
+
+            <a href="https://japhizzz.github.io/portfolio/" class="btn-home">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="15 18 9 12 15 6"></polyline>
+                </svg>
+                back to home
+            </a>
+
+            <div class="path-info">
+                <span>$</span> requested path: <span id="pathDisplay">unknown</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tampilkan path yang dicoba diakses
+        const pathEl = document.getElementById('pathDisplay');
+        if (pathEl) {
+            const p = window.location.pathname;
+            pathEl.textContent = p.length > 40 ? p.slice(0, 40) + '…' : p;
+        }
+
+        // Custom cursor
+        const outer = document.getElementById('cursorOuter');
+        const inner = document.getElementById('cursorInner');
+        let mx = -100, my = -100, ox = -100, oy = -100, ix = -100, iy = -100;
+
+        if (window.innerWidth > 768 && !('ontouchstart' in window)) {
+            document.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
+            document.addEventListener('mouseleave', () => { outer.style.opacity = '0'; inner.style.opacity = '0'; });
+            document.addEventListener('mouseenter', () => { outer.style.opacity = ''; inner.style.opacity = ''; });
+
+            const hs = 'a, button, .btn-home';
+            document.addEventListener('mouseover', e => { if (e.target.closest(hs)) outer.classList.add('hovering'); });
+            document.addEventListener('mouseout',  e => { if (e.target.closest(hs)) outer.classList.remove('hovering'); });
+
+            (function anim() {
+                ox += (mx - ox) * 0.12; oy += (my - oy) * 0.12;
+                outer.style.left = ox + 'px'; outer.style.top = oy + 'px';
+                ix += (mx - ix) * 0.25; iy += (my - iy) * 0.25;
+                inner.style.left = ix + 'px'; inner.style.top = iy + 'px';
+                requestAnimationFrame(anim);
+            })();
+        } else {
+            outer.style.display = 'none';
+            inner.style.display = 'none';
+        }
+    </script>
+</body>
+</html>
