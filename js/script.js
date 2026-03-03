@@ -767,9 +767,25 @@ function initScrollReveal() {
 
 // ========== SKILL BARS ==========
 function initSkillBars() {
-    const bars=document.querySelectorAll('.skill-bar-fill');
-    const obs=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting)e.target.style.width=e.target.dataset.width+'%';});},{threshold:0.3});
-    bars.forEach(b=>obs.observe(b));
+    const bars = document.querySelectorAll('.skill-bar-fill');
+
+    // Threshold 0 + rootMargin positif: terpicu segera saat bar mulai masuk
+    // viewport dari arah mana pun — fix untuk mobile di mana card tinggi
+    // dan 30% elemen tidak pernah terlihat sekaligus.
+    const obs = new IntersectionObserver(es => {
+        es.forEach(e => {
+            if (e.isIntersecting) {
+                e.target.style.width = e.target.dataset.width + '%';
+                obs.unobserve(e.target); // stop observing setelah animasi dipicu
+            }
+        });
+    }, { threshold: 0, rootMargin: '0px 0px 0px 0px' });
+
+    bars.forEach(b => {
+        // Reset dulu ke 0 agar animasi selalu berjalan dari awal
+        b.style.width = '0';
+        obs.observe(b);
+    });
 }
 
 // ========== MAGIC BENTO (Dynamic border glow) ==========
