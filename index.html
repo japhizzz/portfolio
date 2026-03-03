@@ -902,30 +902,36 @@
         const cards = Array.from(container.querySelectorAll('.proj-card'));
         const total = cards.length;
 
-        // Measure tallest card untuk set container height
-        cards.forEach(c => {
-            c.style.position = 'relative';
-            c.style.top = 'auto';
-            c.style.left = 'auto';
-            c.style.transform = 'none';
-            c.style.visibility = 'hidden';
-        });
-        const tallest = Math.max(...cards.map(c => c.getBoundingClientRect().height));
-        cards.forEach(c => {
-            c.style.height = tallest + 'px';
-            c.style.position = 'absolute';
-            c.style.top = '50%';
-            c.style.left = '50%';
-            c.style.visibility = '';
-        });
-        container.style.height = tallest + 'px';
+        // ── Fix 1: Ukur tallest setelah semua gambar selesai load ─────────────
+        // Sebelumnya diukur langsung saat script jalan — gambar belum tentu
+        // selesai didownload sehingga tinggi kartu bisa terlalu kecil.
+        // Sekarang kita tunggu semua <img> di dalam container selesai load dulu.
+        function measureAndInit() {
+            cards.forEach(c => {
+                c.style.position = 'relative';
+                c.style.top = 'auto';
+                c.style.left = 'auto';
+                c.style.transform = 'none';
+                c.style.visibility = 'hidden';
+            });
+            const tallest = Math.max(...cards.map(c => c.getBoundingClientRect().height));
+            cards.forEach(c => {
+                c.style.height = tallest + 'px';
+                c.style.position = 'absolute';
+                c.style.top = '50%';
+                c.style.left = '50%';
+                c.style.visibility = '';
+            });
+            container.style.height = tallest + 'px';
+            return tallest;
+        }
 
-        // Responsive distances
-        const isMobile = window.innerWidth <= 600;
-        const cardDistance     = isMobile ? 18 : 50;
-        const verticalDistance = isMobile ? 18 : 40;
-        const skewAmount       = isMobile ? 2 : 5;
-        const delay            = 4000;
+        // Responsive distances — pakai let agar bisa diupdate saat resize
+        let isMobile         = window.innerWidth <= 600;
+        let cardDistance     = isMobile ? 18 : 50;
+        let verticalDistance = isMobile ? 18 : 40;
+        let skewAmount       = isMobile ? 2 : 5;
+        const delay          = 4000;
 
         const cfg = {
             ease: 'elastic.out(0.6, 0.9)',
@@ -950,7 +956,35 @@
         });
 
         let order = cards.map((_, i) => i);
+
+        // ── Fix: Pisahkan pengukuran dari penempatan kartu ────────────────────
+        // Masalah sebelumnya: measureAndInit dipanggil 2x tanpa placeNow setelahnya.
+        // Saat Promise.all selesai, measureAndInit me-reset style (position, transform)
+        // yang sudah di-set GSAP — akibatnya kartu meleset ke pojok kanan bawah.
+        //
+        // Solusi: setiap kali measureAndInit dipanggil, selalu ikuti dengan placeNow
+        // agar GSAP langsung reposition kartu ke slot yang benar.
+        const allImgs = Array.from(container.querySelectorAll('img'));
+        const imgPromises = allImgs.map(img =>
+            img.complete ? Promise.resolve() :
+            new Promise(res => {
+                img.addEventListener('load', res, { once: true });
+                img.addEventListener('error', res, { once: true });
+            })
+        );
+
+        // Langkah 1: ukur + place sekarang untuk layout awal
+        measureAndInit();
         cards.forEach((card, i) => placeNow(card, makeSlot(i)));
+
+        // Langkah 2: setelah semua gambar load, ukur ulang + re-place sesuai order
+        Promise.all(imgPromises).then(() => {
+            measureAndInit();
+            cards.forEach((card, i) => {
+                const idx = order.indexOf(i);
+                if (idx >= 0) placeNow(card, makeSlot(idx));
+            });
+        });
 
         let swapInterval = null;
         let isAnimating = false;
@@ -1095,10 +1129,39 @@
         }, { threshold: 0.2 });
         obs.observe(container);
 
-        // Pause on hover (hanya auto-swap, tombol tetap bisa diklik)
+        // ── Fix 3: mouseleave hanya restart interval kalau section sudah pernah terlihat ──
+        // Sebelumnya langsung setInterval tanpa cek hasBeenSeen — swap bisa
+        // jalan sebelum section masuk viewport jika user sempat hover lebih dulu.
         container.addEventListener('mouseenter', () => clearInterval(swapInterval));
         container.addEventListener('mouseleave', () => {
-            swapInterval = setInterval(() => swap('forward'), delay);
+            if (hasBeenSeen) {
+                swapInterval = setInterval(() => swap('forward'), delay);
+            }
+        });
+
+        // ── Fix 2: Resize handler — update isMobile, distances, ukur ulang tinggi ─
+        // Sebelumnya tidak ada handler ini — kartu bisa berantakan saat user
+        // putar HP (portrait ↔ landscape) atau resize window browser.
+        let resizeTimer = null;
+        window.addEventListener('resize', () => {
+            // Debounce 200ms agar tidak terlalu sering dipanggil saat resize drag
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(() => {
+                // Update responsive values
+                isMobile         = window.innerWidth <= 600;
+                cardDistance     = isMobile ? 18 : 50;
+                verticalDistance = isMobile ? 18 : 40;
+                skewAmount       = isMobile ? 2 : 5;
+
+                // Ukur ulang tinggi kartu dan container
+                measureAndInit();
+
+                // Re-place semua kartu ke slot yang benar dengan nilai baru
+                cards.forEach((card, i) => {
+                    const idx = order.indexOf(i);
+                    if (idx >= 0) placeNow(card, makeSlot(idx));
+                });
+            }, 200);
         });
     })();
     </script>
