@@ -564,17 +564,33 @@ function initGalaxyBg() {
         gl.uniform1f(unif.uMouseActive, mouseActive);
         gl.drawArrays(gl.TRIANGLES, 0, 3);
     }
-    // ── Auto-benchmark: render 10 frame, ukur rata-rata waktu per frame ─────
-    // Kalau rata-rata > 40ms (di bawah 25fps), device dianggap low-end
-    // dan galaxy di-off otomatis sebelum user sempat lihat lag
-    const BENCHMARK_FRAMES  = 10;
-    const BENCHMARK_THRESHOLD = 40; // ms — di bawah 25fps dianggap lemah
+    // ── Auto-benchmark: deteksi hardware + render test ───────────────────────
+    // Tahap 1: Hardware hints — jika RAM ≤ 2GB atau CPU core ≤ 2, langsung
+    //          anggap low-end tanpa perlu render sama sekali.
+    // Tahap 2: Render 12 frame (frame ke-0 di-skip karena shader compile spike).
+    //          gl.finish() dipanggil sebelum catat waktu agar GPU sync.
+    //          Jika rata-rata 11 frame pengukuran > 40ms → low-end.
+    const BENCHMARK_FRAMES    = 12;  // total frame (frame ke-0 di-skip)
+    const BENCHMARK_MEASURED  = 11;  // frame yang benar-benar diukur
+    const BENCHMARK_THRESHOLD = 40;  // ms per frame — di bawah 25fps = low-end
     let   benchFrames = 0;
     let   benchStart  = null;
     let   benchDone   = false;
 
+    // ── Tahap 1: Hardware hints check ──────────────────────────────────────
+    const lowMemory = navigator.deviceMemory !== undefined && navigator.deviceMemory <= 2;
+    const lowCPU    = navigator.hardwareConcurrency !== undefined && navigator.hardwareConcurrency <= 2;
+
+    if (lowMemory || lowCPU) {
+        // Device jelas low-end — skip benchmark, langsung aktifkan fallback
+        benchDone = true;
+        applyLowEndFallback();
+    } else {
+        // Device mungkin cukup kuat — lanjut ke benchmark render
+        requestAnimationFrame(benchmarkRender);
+    }
+
     function benchmarkRender(t) {
-        if (benchFrames === 0) benchStart = t;
         benchFrames++;
 
         // Render frame seperti biasa selama benchmark
@@ -592,84 +608,91 @@ function initGalaxyBg() {
         gl.uniform1f(unif.uMouseActive, 0);
         gl.drawArrays(gl.TRIANGLES, 0, 3);
 
+        // ── Perbaikan 2: gl.finish() — paksa GPU selesai sebelum catat waktu ──
+        // Tanpa ini, timer CPU bisa selesai lebih dulu dari GPU (asynchronous),
+        // sehingga avgMs bisa false-rendah di device lemah.
+        gl.finish();
+
+        // ── Perbaikan 3: Skip frame ke-0 (shader compilation spike) ──────────
+        // Frame pertama selalu lambat karena GPU masih compile shader.
+        // Mulai catat waktu di frame ke-1 (benchFrames === 2 setelah increment).
+        if (benchFrames === 2) benchStart = t;
+
         if (benchFrames < BENCHMARK_FRAMES) {
             requestAnimationFrame(benchmarkRender);
             return;
         }
 
-        // Benchmark selesai — hitung rata-rata per frame
-        const avgMs = (t - benchStart) / BENCHMARK_FRAMES;
+        // Benchmark selesai — hitung rata-rata dari frame yang valid saja
+        const avgMs = (t - benchStart) / BENCHMARK_MEASURED;
         benchDone = true;
 
         if (avgMs > BENCHMARK_THRESHOLD) {
-            // Device lemah — matikan galaxy, aktifkan shooting stars fallback
-            galaxyEnabled = false;
-            gl.clearColor(0, 0, 0, 0);
-            gl.clear(gl.COLOR_BUFFER_BIT);
-            canvas.style.opacity = '0';
-
-            // Aktifkan shooting stars Canvas 2D sebagai fallback
-            const ssCanvas = document.getElementById('shootingStarsCanvas');
-            if (ssCanvas && ssCanvas._startShootingStars) ssCanvas._startShootingStars();
-
-            const toggleBtn = document.getElementById('galaxyToggleBtn');
-            if (toggleBtn) {
-                const iconOn  = toggleBtn.querySelector('.galaxy-icon-on');
-                const iconOff = toggleBtn.querySelector('.galaxy-icon-off');
-                const label   = toggleBtn.querySelector('.galaxy-toggle-label');
-                iconOn.style.display  = 'none';
-                iconOff.style.display = '';
-                label.textContent = 'Galaxy: OFF';
-                toggleBtn.classList.add('galaxy-off');
-
-                // Toggle dari low-device: ON = WebGL, OFF = shooting stars
-                toggleBtn.dataset.listenerAttached = 'true';
-                toggleBtn.addEventListener('click', () => {
-                    galaxyEnabled = !galaxyEnabled;
-                    const ss = document.getElementById('shootingStarsCanvas');
-                    if (galaxyEnabled) {
-                        canvas.style.opacity = '1';
-                        if (!rafId) rafId = requestAnimationFrame(render);
-                        iconOn.style.display  = '';
-                        iconOff.style.display = 'none';
-                        label.textContent = 'Galaxy: ON';
-                        toggleBtn.classList.remove('galaxy-off');
-                        if (ss && ss._stopShootingStars) ss._stopShootingStars();
-                    } else {
-                        gl.clearColor(0, 0, 0, 0);
-                        gl.clear(gl.COLOR_BUFFER_BIT);
-                        canvas.style.opacity = '0';
-                        iconOn.style.display  = 'none';
-                        iconOff.style.display = '';
-                        label.textContent = 'Galaxy: OFF';
-                        toggleBtn.classList.add('galaxy-off');
-                        if (ss && ss._startShootingStars) ss._startShootingStars();
-                    }
-                });
-            }
-
-            // Notif kecil di pojok — hilang sendiri setelah 5 detik
-            const notif = document.createElement('div');
-            notif.textContent = '⚡ Galaxy animation disabled automatically for optimal performance';
-            notif.style.cssText = `
-                position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
-                background: rgba(0,0,0,0.75); color: #fff; font-size: 12px;
-                padding: 8px 16px; border-radius: 20px; z-index: 9999;
-                backdrop-filter: blur(8px); pointer-events: none;
-                opacity: 1; transition: opacity 1s ease;
-            `;
-            document.body.appendChild(notif);
-            setTimeout(() => { notif.style.opacity = '0'; }, 4000);
-            setTimeout(() => { notif.remove(); }, 5000);
-
+            applyLowEndFallback();
         } else {
             // Device kuat — lanjut render normal
             requestAnimationFrame(render);
         }
     }
 
-    // Mulai benchmark saat halaman load
-    requestAnimationFrame(benchmarkRender);
+    // ── applyLowEndFallback: dipanggil dari hardware hints ATAU benchmark ─────
+    function applyLowEndFallback() {
+        galaxyEnabled = false;
+        gl.clearColor(0, 0, 0, 0);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+        canvas.style.opacity = '0';
+
+        const ssCanvas = document.getElementById('shootingStarsCanvas');
+        if (ssCanvas && ssCanvas._startShootingStars) ssCanvas._startShootingStars();
+
+        const toggleBtn = document.getElementById('galaxyToggleBtn');
+        if (toggleBtn) {
+            const iconOn  = toggleBtn.querySelector('.galaxy-icon-on');
+            const iconOff = toggleBtn.querySelector('.galaxy-icon-off');
+            const label   = toggleBtn.querySelector('.galaxy-toggle-label');
+            iconOn.style.display  = 'none';
+            iconOff.style.display = '';
+            label.textContent = 'Galaxy: OFF';
+            toggleBtn.classList.add('galaxy-off');
+
+            toggleBtn.dataset.listenerAttached = 'true';
+            toggleBtn.addEventListener('click', () => {
+                galaxyEnabled = !galaxyEnabled;
+                const ss = document.getElementById('shootingStarsCanvas');
+                if (galaxyEnabled) {
+                    canvas.style.opacity = '1';
+                    if (!rafId) rafId = requestAnimationFrame(render);
+                    iconOn.style.display  = '';
+                    iconOff.style.display = 'none';
+                    label.textContent = 'Galaxy: ON';
+                    toggleBtn.classList.remove('galaxy-off');
+                    if (ss && ss._stopShootingStars) ss._stopShootingStars();
+                } else {
+                    gl.clearColor(0, 0, 0, 0);
+                    gl.clear(gl.COLOR_BUFFER_BIT);
+                    canvas.style.opacity = '0';
+                    iconOn.style.display  = 'none';
+                    iconOff.style.display = '';
+                    label.textContent = 'Galaxy: OFF';
+                    toggleBtn.classList.add('galaxy-off');
+                    if (ss && ss._startShootingStars) ss._startShootingStars();
+                }
+            });
+        }
+
+        const notif = document.createElement('div');
+        notif.textContent = '⚡ Galaxy animation disabled automatically for optimal performance';
+        notif.style.cssText = `
+            position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+            background: rgba(0,0,0,0.75); color: #fff; font-size: 12px;
+            padding: 8px 16px; border-radius: 20px; z-index: 9999;
+            backdrop-filter: blur(8px); pointer-events: none;
+            opacity: 1; transition: opacity 1s ease;
+        `;
+        document.body.appendChild(notif);
+        setTimeout(() => { notif.style.opacity = '0'; }, 4000);
+        setTimeout(() => { notif.remove(); }, 5000);
+    }
 
     // ── Galaxy Toggle Button (hanya untuk device kuat — low-device sudah handle di benchmark) ──
     const toggleBtn = document.getElementById('galaxyToggleBtn');
